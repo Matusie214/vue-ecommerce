@@ -26,6 +26,27 @@
               {{ cartStore.itemCount }}
             </span>
           </RouterLink>
+          
+          <!-- User menu -->
+          <div v-if="authStore.isAuthenticated" class="flex items-center space-x-2">
+            <span class="text-2xl">{{ authStore.user?.avatar }}</span>
+            <span class="hidden md:block text-gray-700">{{ authStore.user?.name }}</span>
+            <button 
+              @click="authStore.logout"
+              class="text-gray-700 hover:text-blue-600 transition-colors text-sm"
+            >
+              Logout
+            </button>
+          </div>
+          
+          <div v-else class="flex items-center space-x-2">
+            <RouterLink to="/login" class="text-gray-700 hover:text-blue-600 transition-colors">
+              Login
+            </RouterLink>
+            <RouterLink to="/register" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+              Sign Up
+            </RouterLink>
+          </div>
         </div>
       </div>
     </div>
@@ -34,6 +55,8 @@
 
 <script setup lang="ts">
 import { useCartStore } from '@/stores/cart'
+import { useAuthStore } from '@/stores/auth'
 
 const cartStore = useCartStore()
+const authStore = useAuthStore()
 </script>

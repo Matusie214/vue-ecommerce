@@ -1,19 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-
-export interface Product {
-  id: number
-  name: string
-  price: number
-  image: string
-  description: string
-  category: string
-}
-
-export interface CartItem {
-  product: Product
-  quantity: number
-}
+import type { Product, CartItem } from '@/lib/supabase'
 
 export const useCartStore = defineStore('cart', () => {
   const items = ref<CartItem[]>([])

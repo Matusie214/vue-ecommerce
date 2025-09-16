@@ -68,12 +68,12 @@
         </div>
         
         <div class="flex space-x-4">
-          <button 
-            @click="checkout"
-            class="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+          <RouterLink 
+            to="/checkout"
+            class="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors font-semibold text-center"
           >
             Proceed to Checkout
-          </button>
+          </RouterLink>
           <button 
             @click="cartStore.clearCart"
             class="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
@@ -96,8 +96,4 @@ const productEmojis: Record<number, string> = {
 }
 
 const getProductEmoji = (id: number) => productEmojis[id] || '📦'
-
-const checkout = () => {
-  alert('Checkout functionality would be implemented here!')
-}
 </script>

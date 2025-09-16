@@ -5,10 +5,76 @@
       <p class="text-lg text-gray-600">Discover our amazing collection</p>
     </div>
 
+    <!-- Search and Filters -->
+    <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Search -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Search Products</label>
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Search by name..."
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+        
+        <!-- Category Filter -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
+          <select 
+            v-model="selectedCategory"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="">All Categories</option>
+            <option value="electronics">Electronics</option>
+            <option value="home">Home & Garden</option>
+            <option value="fashion">Fashion</option>
+            <option value="accessories">Accessories</option>
+          </select>
+        </div>
+        
+        <!-- Price Range -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Price Range</label>
+          <select 
+            v-model="priceRange"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="">All Prices</option>
+            <option value="0-100">$0 - $100</option>
+            <option value="100-300">$100 - $300</option>
+            <option value="300-500">$300 - $500</option>
+            <option value="500+">$500+</option>
+          </select>
+        </div>
+      </div>
+      
+      <!-- Sort -->
+      <div class="mt-4 flex justify-between items-center">
+        <div class="flex items-center space-x-4">
+          <span class="text-sm text-gray-600">Sort by:</span>
+          <select 
+            v-model="sortBy"
+            class="px-3 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="name">Name</option>
+            <option value="price-low">Price: Low to High</option>
+            <option value="price-high">Price: High to Low</option>
+            <option value="category">Category</option>
+          </select>
+        </div>
+        
+        <div class="text-sm text-gray-600">
+          {{ filteredProducts.length }} product{{ filteredProducts.length !== 1 ? 's' : '' }} found
+        </div>
+      </div>
+    </div>
+
     <!-- Product Grid -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       <div 
-        v-for="product in products" 
+        v-for="product in filteredProducts" 
         :key="product.id"
         class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
       >
@@ -35,7 +101,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useCartStore } from '@/stores/cart'
 import type { Product } from '@/stores/cart'
 
@@ -49,8 +115,68 @@ const products = ref<(Product & { emoji: string })[]>([
   { id: 5, name: 'Smartphone', price: 699, emoji: '📱', description: 'Latest flagship smartphone', category: 'electronics', image: '' },
   { id: 6, name: 'Sneakers', price: 129, emoji: '👟', description: 'Comfortable running shoes', category: 'fashion', image: '' },
   { id: 7, name: 'Laptop', price: 999, emoji: '💻', description: 'High-performance laptop', category: 'electronics', image: '' },
-  { id: 8, name: 'Sunglasses', price: 89, emoji: '🕶️', description: 'UV protection sunglasses', category: 'accessories', image: '' }
+  { id: 8, name: 'Sunglasses', price: 89, emoji: '🕶️', description: 'UV protection sunglasses', category: 'accessories', image: '' },
+  { id: 9, name: 'Gaming Mouse', price: 59, emoji: '🖱️', description: 'High-precision gaming mouse', category: 'electronics', image: '' },
+  { id: 10, name: 'Plant Pot', price: 25, emoji: '🪴', description: 'Ceramic decorative plant pot', category: 'home', image: '' },
+  { id: 11, name: 'Wallet', price: 45, emoji: '👛', description: 'Leather bi-fold wallet', category: 'accessories', image: '' },
+  { id: 12, name: 'T-Shirt', price: 29, emoji: '👕', description: 'Cotton crew neck t-shirt', category: 'fashion', image: '' }
 ])
+
+// Filter and search state
+const searchQuery = ref('')
+const selectedCategory = ref('')
+const priceRange = ref('')
+const sortBy = ref('name')
+
+// Computed filtered products
+const filteredProducts = computed(() => {
+  let filtered = [...products.value]
+
+  // Search filter
+  if (searchQuery.value) {
+    filtered = filtered.filter(product =>
+      product.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+      product.description.toLowerCase().includes(searchQuery.value.toLowerCase())
+    )
+  }
+
+  // Category filter
+  if (selectedCategory.value) {
+    filtered = filtered.filter(product => product.category === selectedCategory.value)
+  }
+
+  // Price range filter
+  if (priceRange.value) {
+    filtered = filtered.filter(product => {
+      const price = product.price
+      switch (priceRange.value) {
+        case '0-100': return price <= 100
+        case '100-300': return price > 100 && price <= 300
+        case '300-500': return price > 300 && price <= 500
+        case '500+': return price > 500
+        default: return true
+      }
+    })
+  }
+
+  // Sorting
+  switch (sortBy.value) {
+    case 'name':
+      filtered.sort((a, b) => a.name.localeCompare(b.name))
+      break
+    case 'price-low':
+      filtered.sort((a, b) => a.price - b.price)
+      break
+    case 'price-high':
+      filtered.sort((a, b) => b.price - a.price)
+      break
+    case 'category':
+      filtered.sort((a, b) => a.category.localeCompare(b.category))
+      break
+  }
+
+  return filtered
+})
 
 const addToCart = (product: Product) => {
   cartStore.addToCart(product)
