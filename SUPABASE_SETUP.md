@@ -2,20 +2,19 @@
 
 ## 1. Setup bazy danych
 
-**OPCJA A - Prosty setup (zalecane na początek):**
+**NAJLEPSZE rozwiązanie - Minimal setup:**
 
 1. Idź do Supabase dashboard → **SQL Editor**
 2. Skopiuj całą zawartość pliku `database-reset.sql`
 3. Wklej i kliknij **Run**
-4. Skopiuj całą zawartość pliku `database-simple.sql`
+4. Skopiuj całą zawartość pliku `database-minimal.sql`
 5. Wklej w nowym oknie SQL Editor i kliknij **Run**
 
-**OPCJA B - Pełny setup (jeśli prosty nie działa):**
+**Inne opcje (jeśli minimal nie działa):**
+- `database-simple.sql` - z triggerem automatycznego tworzenia profili
+- `database.sql` - pełna wersja z zaawansowanymi politykami
 
-1. Użyj `database-reset.sql`
-2. Potem użyj `database.sql` (pełna wersja z zaawansowanymi politykami)
-
-**Ważne**: Baza ma automatyczny trigger tworzący profile użytkowników!
+**Ważne**: W wersji minimal aplikacja sama tworzy profile użytkowników!
 
 ## 2. Znajdź właściwe klucze API
 
@@ -75,9 +74,10 @@ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSI...
 - Klucze API nie są ustawione w environment variables
 - Rozwiązanie: Sprawdź Netlify environment variables
 
-### Użytkownik nie pojawia się w tabeli users
-- Tabela users nie istnieje lub ma błędne foreign keys
-- Rozwiązanie: Uruchom database-reset.sql i potem database.sql
+### "Database error saving new user" lub użytkownik nie pojawia się w tabeli
+- Trigger do tworzenia profili ma problem z foreign keys  
+- Rozwiązanie: Użyj database-minimal.sql (aplikacja tworzy profile ręcznie)
+- Aplikacja automatycznie utworzy profil po pierwszym logowaniu
 
 ## Twoje aktualne dane:
 

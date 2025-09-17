@@ -34,8 +34,28 @@ export const useAuthStore = defineStore('auth', () => {
           .single()
 
         if (profileError) {
-          console.error('Profile not found:', profileError)
-          throw new Error('User profile not found. Please try logging in again.')
+          // Profile doesn't exist, create it manually
+          console.log('Creating user profile manually...')
+          const newProfile = {
+            id: data.user.id,
+            email: data.user.email!,
+            full_name: data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || 'User',
+            role: 'user' as const
+          }
+
+          const { error: insertError } = await supabase
+            .from('users')
+            .insert([newProfile])
+
+          if (insertError) {
+            console.error('Error creating profile manually:', insertError)
+            throw new Error('Failed to create user profile')
+          }
+
+          user.value = {
+            ...newProfile,
+            created_at: data.user.created_at!
+          }
         } else {
           user.value = profile
         }
@@ -72,22 +92,27 @@ export const useAuthStore = defineStore('auth', () => {
       if (authError) throw authError
 
       if (data.user) {
-        // Profile will be created automatically by the database trigger
-        // Wait a moment and then fetch the profile
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        
-        const { data: profile, error: profileError } = await supabase
+        // Create user profile manually (no database trigger)
+        const newProfile = {
+          id: data.user.id,
+          email: data.user.email!,
+          full_name: fullName,
+          role: 'user' as const
+        }
+
+        const { error: profileError } = await supabase
           .from('users')
-          .select('*')
-          .eq('id', data.user.id)
-          .single()
+          .insert([newProfile])
 
         if (profileError) {
           console.error('Profile creation failed:', profileError)
-          throw new Error('Account created but profile setup failed. Please try logging in.')
+          throw new Error('Failed to create user profile')
         }
 
-        user.value = profile
+        user.value = {
+          ...newProfile,
+          created_at: data.user.created_at!
+        }
       }
 
       return { success: true }
@@ -129,7 +154,24 @@ export const useAuthStore = defineStore('auth', () => {
         user.value = profile
       } else if (profileError) {
         console.error('Profile not found for existing user:', profileError)
-        // Don't auto-create, trigger should have handled this
+        // Auto-create profile for existing auth users without profiles
+        const newProfile = {
+          id: authUser.id,
+          email: authUser.email!,
+          full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
+          role: 'user' as const
+        }
+
+        const { error: insertError } = await supabase
+          .from('users')
+          .insert([newProfile])
+
+        if (!insertError) {
+          user.value = {
+            ...newProfile,
+            created_at: authUser.created_at!
+          }
+        }
       }
     }
   }
