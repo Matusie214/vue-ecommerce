@@ -1,12 +1,16 @@
 # Vue E-commerce Store
 
-A modern e-commerce application built with Vue 3, TypeScript, and Supabase.
+A modern e-commerce application built with Vue 3, TypeScript, and Supabase with advanced inventory management and product galleries.
 
 ## Features
 
 - **Product Catalog**: Browse products with search, filtering, and sorting
-- **Shopping Cart**: Add/remove items, update quantities
+- **Advanced Inventory Management**: Real-time stock tracking with conditional purchase flows
+- **Product Galleries**: Multi-image product galleries with professional photography
+- **Stock Notifications**: Email alerts when out-of-stock items become available
+- **Smart Shopping Cart**: Add to cart when in stock, order requests when out of stock
 - **User Authentication**: Register, login, logout with Supabase Auth
+- **Review System**: Customer reviews and star ratings
 - **Order Management**: Create and track orders
 - **Responsive Design**: Mobile-first design with Tailwind CSS
 - **Database Integration**: Real-time data with Supabase PostgreSQL
@@ -88,16 +92,21 @@ When Supabase is not configured, the app runs in demo mode with these credential
 - Row Level Security (RLS) policies
 
 ### Products
-- Product listing with pagination
+- Product listing with advanced filtering and search
 - Search by name/description
-- Filter by category and price range
-- Sort by various criteria
+- Filter by category, price range, and stock availability
+- Sort by various criteria (name, price, category)
+- Product image galleries with multiple high-quality photos
+- Detailed product specifications and descriptions
+- Real-time stock quantity display
 
-### Shopping Cart
-- Add/remove products
-- Update quantities
+### Shopping Cart & Inventory
+- **In Stock Products**: Standard add to cart functionality
+- **Out of Stock Products**: "Notify Me" form for stock alerts
+- Update quantities for available items
 - Persistent cart state
-- Cart summary
+- Cart summary with real-time stock validation
+- Visual stock indicators (green/red status dots)
 
 ### Orders
 - Checkout flow with billing information
@@ -107,10 +116,12 @@ When Supabase is not configured, the app runs in demo mode with these credential
 
 ## Database Schema
 
-- **users**: User profiles
-- **products**: Product catalog
-- **orders**: Order records
-- **order_items**: Order line items
+- **users**: User profiles linked to Supabase Auth
+- **products**: Product catalog with stock tracking, images, and specifications
+- **product_reviews**: Customer reviews with ratings and comments
+- **stock_notifications**: Email notifications for out-of-stock products
+- **orders**: Order records with status tracking
+- **order_items**: Order line items with quantity and pricing
 
 ## Contributing
 
