@@ -65,6 +65,10 @@
           {{ error }}
         </div>
         
+        <div v-if="successMessage" class="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
+          {{ successMessage }}
+        </div>
+        
         <button
           type="submit"
           :disabled="authStore.loading"
@@ -103,9 +107,11 @@ const form = ref({
 })
 
 const error = ref('')
+const successMessage = ref('')
 
 const handleRegister = async () => {
   error.value = ''
+  successMessage.value = ''
   
   if (form.value.password !== form.value.confirmPassword) {
     error.value = 'Passwords do not match'
@@ -120,7 +126,11 @@ const handleRegister = async () => {
   const result = await authStore.register(form.value.email, form.value.password, form.value.name)
   
   if (result.success) {
-    router.push('/')
+    if (result.message) {
+      successMessage.value = result.message
+    } else {
+      router.push('/')
+    }
   } else {
     error.value = result.error || 'Registration failed'
   }

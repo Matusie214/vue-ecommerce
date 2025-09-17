@@ -92,6 +92,19 @@ export const useAuthStore = defineStore('auth', () => {
       if (authError) throw authError
 
       if (data.user) {
+        // Check if email confirmation is required but not completed
+        if (!data.user.email_confirmed_at) {
+          console.log('Email confirmation required but not completed')
+          // Don't create profile yet, wait for email confirmation
+          return { 
+            success: true, 
+            message: 'Please check your email and confirm your account before proceeding.' 
+          }
+        }
+        console.log('User created in auth.users:', data.user.id)
+        console.log('Email confirmed:', data.user.email_confirmed_at)
+        console.log('User metadata:', data.user.user_metadata)
+        
         // Create user profile manually (no database trigger)
         const newProfile = {
           id: data.user.id,
@@ -100,14 +113,21 @@ export const useAuthStore = defineStore('auth', () => {
           role: 'user' as const
         }
 
-        const { error: profileError } = await supabase
+        console.log('Attempting to create profile:', newProfile)
+        
+        const { data: insertData, error: profileError } = await supabase
           .from('users')
           .insert([newProfile])
+          .select()
 
         if (profileError) {
           console.error('Profile creation failed:', profileError)
-          throw new Error('Failed to create user profile')
+          console.error('Error details:', profileError.details)
+          console.error('Error hint:', profileError.hint)
+          throw new Error(`Failed to create user profile: ${profileError.message}`)
         }
+
+        console.log('Profile created successfully:', insertData)
 
         user.value = {
           ...newProfile,
