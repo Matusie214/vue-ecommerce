@@ -76,26 +76,53 @@ npm run dev
    - `VITE_SUPABASE_URL`
    - `VITE_SUPABASE_ANON_KEY`
 
-## Demo Credentials
+## Supabase Setup
 
-The app runs in demo mode by default (without Supabase). Use these credentials to log in:
+This application requires a Supabase project for authentication and data storage.
 
-- **Email**: demo@example.com  
-- **Password**: demo123
+### 1. Create Supabase Project
 
-Alternative demo account:
-- **Email**: john@example.com
-- **Password**: demo123
+1. Go to [supabase.com](https://supabase.com) and create a free account
+2. Create a new project
+3. Wait for the project to be set up (usually takes 2-3 minutes)
 
-**Note**: If you get "Forbidden use of secret API key" error, make sure your `.env` file has empty values for Supabase keys to enable demo mode.
+### 2. Configure Environment Variables
+
+1. In your Supabase project dashboard, go to **Settings** → **API**
+2. Copy your project URL and anon key
+3. Update your `.env` file:
+
+```bash
+VITE_SUPABASE_URL=https://your-project-id.supabase.co
+VITE_SUPABASE_ANON_KEY=your_anon_key_here
+```
+
+**Important**: Use the `anon` key, NOT the `service_role` key for security.
+
+### 3. Set Up Database
+
+1. In your Supabase project, go to **SQL Editor**
+2. Copy and paste the entire contents of `database.sql` 
+3. Click "Run" to create all tables and policies
+
+### 4. Create Admin User
+
+After setting up the database, you can create an admin user:
+
+1. Register a new account through the app's signup page
+2. In Supabase dashboard, go to **Table Editor** → **users**
+3. Find your user record and change the `role` from `user` to `admin`
+4. Now you'll have access to the Admin Panel in the application
 
 ## Features Overview
 
-### Authentication
-- User registration and login
-- Protected routes
+### Authentication & Authorization
+- User registration and login with Supabase Auth
+- Role-based access control (user/admin)
+- Protected routes and admin-only features
 - Session persistence
 - Row Level Security (RLS) policies
+- Admin panel for managing products, orders, and notifications
 
 ### Products
 - Product listing with advanced filtering and search

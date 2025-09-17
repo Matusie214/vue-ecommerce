@@ -8,12 +8,7 @@ export const useAuthStore = defineStore('auth', () => {
   const error = ref<string | null>(null)
 
   const isAuthenticated = computed(() => !!user.value)
-
-  // Mock users for demo when Supabase is not configured
-  const mockUsers = [
-    { id: '1', email: 'demo@example.com', full_name: 'Demo User', created_at: new Date().toISOString() },
-    { id: '2', email: 'john@example.com', full_name: 'John Doe', created_at: new Date().toISOString() },
-  ]
+  const isAdmin = computed(() => user.value?.role === 'admin')
 
   const login = async (email: string, password: string) => {
     loading.value = true
@@ -21,17 +16,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     try {
       if (!supabase) {
-        // Mock authentication
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        const mockUser = mockUsers.find(u => u.email === email)
-        
-        if (mockUser && password === 'demo123') {
-          user.value = mockUser
-          localStorage.setItem('user', JSON.stringify(mockUser))
-          return { success: true }
-        } else {
-          throw new Error('Invalid credentials')
-        }
+        throw new Error('Database connection not configured. Please contact administrator.')
       }
 
       const { data, error: authError } = await supabase.auth.signInWithPassword({
@@ -42,17 +27,32 @@ export const useAuthStore = defineStore('auth', () => {
       if (authError) throw authError
 
       if (data.user) {
-        const { data: profile } = await supabase
+        const { data: profile, error: profileError } = await supabase
           .from('users')
           .select('*')
           .eq('id', data.user.id)
           .single()
 
-        user.value = profile || {
-          id: data.user.id,
-          email: data.user.email!,
-          full_name: data.user.user_metadata?.full_name || 'User',
-          created_at: data.user.created_at!
+        if (profileError) {
+          // If profile doesn't exist, create one with default user role
+          const newProfile = {
+            id: data.user.id,
+            email: data.user.email!,
+            full_name: data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || 'User',
+            role: 'user' as const
+          }
+
+          const { error: insertError } = await supabase
+            .from('users')
+            .insert([newProfile])
+
+          if (insertError) {
+            console.error('Error creating profile:', insertError)
+          }
+
+          user.value = newProfile
+        } else {
+          user.value = profile
         }
       }
 
@@ -71,25 +71,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     try {
       if (!supabase) {
-        // Mock registration
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        const existingUser = mockUsers.find(u => u.email === email)
-        
-        if (existingUser) {
-          throw new Error('User already exists')
-        }
-        
-        const newUser: User = {
-          id: (mockUsers.length + 1).toString(),
-          email: email,
-          full_name: fullName,
-          created_at: new Date().toISOString()
-        }
-        
-        mockUsers.push(newUser)
-        user.value = newUser
-        localStorage.setItem('user', JSON.stringify(newUser))
-        return { success: true }
+        throw new Error('Database connection not configured. Please contact administrator.')
       }
 
       const { data, error: authError } = await supabase.auth.signUp({
@@ -105,22 +87,21 @@ export const useAuthStore = defineStore('auth', () => {
       if (authError) throw authError
 
       if (data.user) {
+        const newProfile = {
+          id: data.user.id,
+          email: data.user.email!,
+          full_name: fullName,
+          role: 'user' as const
+        }
+
         const { error: profileError } = await supabase
           .from('users')
-          .insert([
-            {
-              id: data.user.id,
-              email: data.user.email,
-              full_name: fullName
-            }
-          ])
+          .insert([newProfile])
 
         if (profileError) throw profileError
 
         user.value = {
-          id: data.user.id,
-          email: data.user.email!,
-          full_name: fullName,
+          ...newProfile,
           created_at: data.user.created_at!
         }
       }
@@ -148,27 +129,39 @@ export const useAuthStore = defineStore('auth', () => {
 
   const initAuth = async () => {
     if (!supabase) {
-      const savedUser = localStorage.getItem('user')
-      if (savedUser) {
-        user.value = JSON.parse(savedUser)
-      }
       return
     }
 
     const { data: { user: authUser } } = await supabase.auth.getUser()
     
     if (authUser) {
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('users')
         .select('*')
         .eq('id', authUser.id)
         .single()
 
-      user.value = profile || {
-        id: authUser.id,
-        email: authUser.email!,
-        full_name: authUser.user_metadata?.full_name || 'User',
-        created_at: authUser.created_at!
+      if (profile) {
+        user.value = profile
+      } else if (profileError) {
+        // Auto-create profile if missing
+        const newProfile = {
+          id: authUser.id,
+          email: authUser.email!,
+          full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
+          role: 'user' as const
+        }
+
+        const { error: insertError } = await supabase
+          .from('users')
+          .insert([newProfile])
+
+        if (!insertError) {
+          user.value = {
+            ...newProfile,
+            created_at: authUser.created_at!
+          }
+        }
       }
     }
   }
@@ -181,6 +174,7 @@ export const useAuthStore = defineStore('auth', () => {
     loading,
     error,
     isAuthenticated,
+    isAdmin,
     login,
     register,
     logout,

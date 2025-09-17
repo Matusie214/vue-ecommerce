@@ -1,10 +1,4 @@
 <template>
-  <!-- Demo Mode Banner -->
-  <div class="bg-blue-600 text-white text-center py-2 text-sm">
-    <span class="font-medium">🚀 Demo Mode</span> - 
-    Login with demo@example.com / demo123 to explore features
-  </div>
-  
   <nav class="bg-white shadow-md sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex justify-between items-center h-16">
@@ -35,8 +29,12 @@
           
           <!-- User menu -->
           <div v-if="authStore.isAuthenticated" class="flex items-center space-x-2">
-            <RouterLink to="/admin" class="text-gray-700 hover:text-blue-600 transition-colors text-sm">
-              Admin
+            <RouterLink 
+              v-if="authStore.isAdmin" 
+              to="/admin" 
+              class="text-gray-700 hover:text-blue-600 transition-colors text-sm"
+            >
+              Admin Panel
             </RouterLink>
             <span class="text-2xl">👤</span>
             <span class="hidden md:block text-gray-700">{{ authStore.user?.full_name || authStore.user?.name }}</span>

@@ -8,7 +8,8 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
 const hasValidConfig = supabaseUrl && 
                       supabaseAnonKey && 
                       supabaseUrl.includes('supabase.co') &&
-                      !supabaseAnonKey.includes('service_role')
+                      !supabaseAnonKey.includes('service_role') &&
+                      supabaseUrl !== 'https://your-project.supabase.co' // Not placeholder
 
 export const supabase = hasValidConfig ? createClient(supabaseUrl, supabaseAnonKey) : null
 
@@ -46,11 +47,18 @@ export interface StockNotification {
   status: 'pending' | 'notified' | 'cancelled'
 }
 
+export type UserRole = 'user' | 'admin'
+
 export interface User {
   id: string
   email: string
   full_name: string
+  role: UserRole
+  avatar_url?: string
+  phone?: string
+  address?: string
   created_at: string
+  updated_at?: string
 }
 
 export interface Order {

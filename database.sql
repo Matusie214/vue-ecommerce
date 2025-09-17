@@ -5,8 +5,41 @@ CREATE TABLE users (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     email VARCHAR(255) UNIQUE NOT NULL,
     full_name VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    role VARCHAR(50) DEFAULT 'user' CHECK (role IN ('user', 'admin')),
+    avatar_url VARCHAR(500),
+    phone VARCHAR(20),
+    address TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Create admin user function
+CREATE OR REPLACE FUNCTION create_admin_user(
+    admin_email TEXT,
+    admin_password TEXT,
+    admin_full_name TEXT
+)
+RETURNS UUID
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    new_user_id UUID;
+BEGIN
+    -- This function should be called from a secure environment
+    -- Create auth user (this would normally be done via Supabase Auth API)
+    INSERT INTO users (id, email, full_name, role)
+    VALUES (
+        gen_random_uuid(),
+        admin_email,
+        admin_full_name,
+        'admin'
+    )
+    RETURNING id INTO new_user_id;
+    
+    RETURN new_user_id;
+END;
+$$;
 
 -- Products table with enhanced features
 CREATE TABLE products (
@@ -123,7 +156,82 @@ CREATE POLICY "Users can create order items for own orders" ON order_items
         )
     );
 
--- Products are public (read-only)
+-- Products policies
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;
+
+-- Everyone can view products
 CREATE POLICY "Products are viewable by everyone" ON products
     FOR SELECT TO authenticated, anon USING (true);
+
+-- Only admins can manage products
+CREATE POLICY "Admins can insert products" ON products
+    FOR INSERT TO authenticated WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM users 
+            WHERE users.id = auth.uid() 
+            AND users.role = 'admin'
+        )
+    );
+
+CREATE POLICY "Admins can update products" ON products
+    FOR UPDATE TO authenticated USING (
+        EXISTS (
+            SELECT 1 FROM users 
+            WHERE users.id = auth.uid() 
+            AND users.role = 'admin'
+        )
+    );
+
+CREATE POLICY "Admins can delete products" ON products
+    FOR DELETE TO authenticated USING (
+        EXISTS (
+            SELECT 1 FROM users 
+            WHERE users.id = auth.uid() 
+            AND users.role = 'admin'
+        )
+    );
+
+-- Reviews and notifications policies for admins
+ALTER TABLE product_reviews ENABLE ROW LEVEL SECURITY;
+ALTER TABLE stock_notifications ENABLE ROW LEVEL SECURITY;
+
+-- Everyone can view reviews
+CREATE POLICY "Reviews are viewable by everyone" ON product_reviews
+    FOR SELECT TO authenticated, anon USING (true);
+
+-- Authenticated users can add reviews
+CREATE POLICY "Authenticated users can add reviews" ON product_reviews
+    FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+
+-- Users can only delete their own reviews, admins can delete any
+CREATE POLICY "Users can delete own reviews, admins can delete any" ON product_reviews
+    FOR DELETE TO authenticated USING (
+        auth.uid() = user_id OR
+        EXISTS (
+            SELECT 1 FROM users 
+            WHERE users.id = auth.uid() 
+            AND users.role = 'admin'
+        )
+    );
+
+-- Stock notifications - authenticated users can add, admins can manage
+CREATE POLICY "Anyone can add stock notifications" ON stock_notifications
+    FOR INSERT TO authenticated USING (true);
+
+CREATE POLICY "Admins can view all notifications" ON stock_notifications
+    FOR SELECT TO authenticated USING (
+        EXISTS (
+            SELECT 1 FROM users 
+            WHERE users.id = auth.uid() 
+            AND users.role = 'admin'
+        )
+    );
+
+CREATE POLICY "Admins can update notifications" ON stock_notifications
+    FOR UPDATE TO authenticated USING (
+        EXISTS (
+            SELECT 1 FROM users 
+            WHERE users.id = auth.uid() 
+            AND users.role = 'admin'
+        )
+    );

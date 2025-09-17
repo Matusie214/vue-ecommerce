@@ -1,5 +1,20 @@
 <template>
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+  <!-- Access Denied for non-admins -->
+  <div v-if="!authStore.isAdmin" class="max-w-md mx-auto px-4 py-12 text-center">
+    <div class="bg-red-50 border border-red-200 rounded-lg p-8">
+      <svg class="w-16 h-16 text-red-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+      </svg>
+      <h2 class="text-2xl font-bold text-red-800 mb-2">Access Denied</h2>
+      <p class="text-red-700 mb-4">You need administrator privileges to access this page.</p>
+      <RouterLink to="/" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
+        Back to Home
+      </RouterLink>
+    </div>
+  </div>
+
+  <!-- Admin Panel -->
+  <div v-else class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
     <!-- Admin Header -->
     <div class="mb-8">
       <h1 class="text-3xl font-bold text-gray-900">Admin Panel</h1>
