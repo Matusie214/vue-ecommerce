@@ -82,7 +82,7 @@
       <!-- Add Product Form -->
       <div class="bg-white p-6 rounded-lg shadow">
         <h2 class="text-xl font-semibold mb-4">Add New Product</h2>
-        <form @submit.prevent="addProduct" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <form @submit.prevent="addProduct" class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
             <input
@@ -131,7 +131,30 @@
             />
           </div>
           
-          <div class="md:col-span-2">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
+            <input
+              v-model="newProduct.image"
+              type="url"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              placeholder="https://example.com/image.jpg"
+            />
+            <!-- Image Preview for Add Form -->
+            <div v-if="newProduct.image" class="mt-2">
+              <img 
+                :src="newProduct.image" 
+                :alt="newProduct.name || 'Product'"
+                class="w-20 h-20 object-cover rounded border"
+                @error="newProductImageError = true"
+                @load="newProductImageError = false"
+              />
+              <p v-if="newProductImageError" class="text-red-500 text-xs mt-1">
+                Invalid image URL
+              </p>
+            </div>
+          </div>
+          
+          <div class="md:col-span-3">
             <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
             <textarea
               v-model="newProduct.description"
@@ -141,7 +164,7 @@
             ></textarea>
           </div>
           
-          <div class="md:col-span-2">
+          <div class="md:col-span-3">
             <button
               type="submit"
               class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
@@ -171,7 +194,21 @@
               <tr v-for="product in products" :key="product.id">
                 <td class="px-6 py-4 whitespace-nowrap">
                   <div class="flex items-center">
-                    <div class="text-2xl mr-3">{{ product.emoji }}</div>
+                    <div class="flex-shrink-0 h-12 w-12 mr-4">
+                      <img 
+                        v-if="product.image" 
+                        :src="product.image" 
+                        :alt="product.name"
+                        class="h-12 w-12 object-cover rounded-lg border"
+                        @error="$event.target.style.display='none'"
+                      />
+                      <div 
+                        v-else
+                        class="h-12 w-12 bg-gray-100 rounded-lg flex items-center justify-center text-2xl"
+                      >
+                        {{ product.emoji }}
+                      </div>
+                    </div>
                     <div>
                       <div class="text-sm font-medium text-gray-900">{{ product.name }}</div>
                       <div class="text-sm text-gray-500">{{ product.description }}</div>
@@ -188,7 +225,7 @@
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <button
-                    @click="editProduct(product)"
+                    @click="openEditModal(product)"
                     class="text-blue-600 hover:text-blue-900 mr-4"
                   >
                     Edit
@@ -252,6 +289,136 @@
         </div>
       </div>
     </div>
+
+    <!-- Edit Product Modal -->
+    <div v-if="showEditModal" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+      <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <!-- Background overlay -->
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="closeEditModal"></div>
+
+        <!-- Modal panel -->
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+          <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+            <div class="sm:flex sm:items-start">
+              <div class="w-full">
+                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4" id="modal-title">
+                  Edit Product
+                </h3>
+                
+                <form @submit.prevent="updateProduct" class="space-y-4">
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                      <input
+                        v-model="editingProduct.name"
+                        type="text"
+                        required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Price</label>
+                      <input
+                        v-model.number="editingProduct.price"
+                        type="number"
+                        step="0.01"
+                        required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                      <select
+                        v-model="editingProduct.category"
+                        required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Select category</option>
+                        <option value="electronics">Electronics</option>
+                        <option value="home">Home & Garden</option>
+                        <option value="fashion">Fashion</option>
+                        <option value="accessories">Accessories</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Emoji</label>
+                      <input
+                        v-model="editingProduct.emoji"
+                        type="text"
+                        maxlength="2"
+                        required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        placeholder="📱"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
+                    <input
+                      v-model="editingProduct.image"
+                      type="url"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      placeholder="https://example.com/image.jpg"
+                    />
+                  </div>
+                  
+                  <!-- Image Preview -->
+                  <div v-if="editingProduct.image" class="mt-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Image Preview</label>
+                    <div class="border border-gray-300 rounded-lg p-4 bg-gray-50">
+                      <img 
+                        :src="editingProduct.image" 
+                        :alt="editingProduct.name"
+                        class="max-w-full h-32 object-contain mx-auto"
+                        @error="imageError = true"
+                        @load="imageError = false"
+                      />
+                      <p v-if="imageError" class="text-red-500 text-sm mt-2 text-center">
+                        Failed to load image. Please check the URL.
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea
+                      v-model="editingProduct.description"
+                      required
+                      rows="3"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    ></textarea>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Modal footer -->
+          <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+            <button
+              @click="updateProduct"
+              type="button"
+              class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
+            >
+              Update Product
+            </button>
+            <button
+              @click="closeEditModal"
+              type="button"
+              class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -284,6 +451,19 @@ const newProduct = ref({
   image: ''
 })
 
+const showEditModal = ref(false)
+const editingProduct = ref({
+  id: 0,
+  name: '',
+  price: 0,
+  category: '',
+  description: '',
+  emoji: '',
+  image: ''
+})
+const imageError = ref(false)
+const newProductImageError = ref(false)
+
 const addProduct = () => {
   if (!newProduct.value.name || !newProduct.value.price || !newProduct.value.category) {
     alert('Please fill in all required fields')
@@ -308,18 +488,34 @@ const addProduct = () => {
   alert('Product added successfully!')
 }
 
-const editProduct = (product: any) => {
-  const newName = prompt('Enter new name:', product.name)
-  const newPrice = prompt('Enter new price:', product.price.toString())
-  
-  if (newName && newPrice) {
-    productsStore.updateProduct(product.id, {
-      ...product,
-      name: newName,
-      price: parseFloat(newPrice)
-    })
-    alert('Product updated successfully!')
+const openEditModal = (product: any) => {
+  editingProduct.value = { ...product }
+  imageError.value = false
+  showEditModal.value = true
+}
+
+const closeEditModal = () => {
+  showEditModal.value = false
+  editingProduct.value = {
+    id: 0,
+    name: '',
+    price: 0,
+    category: '',
+    description: '',
+    emoji: '',
+    image: ''
   }
+}
+
+const updateProduct = () => {
+  if (!editingProduct.value.name || !editingProduct.value.price || !editingProduct.value.category) {
+    alert('Please fill in all required fields')
+    return
+  }
+
+  productsStore.updateProduct(editingProduct.value.id, editingProduct.value)
+  closeEditModal()
+  alert('Product updated successfully!')
 }
 
 const deleteProduct = (id: number) => {

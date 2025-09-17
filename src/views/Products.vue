@@ -78,8 +78,19 @@
         :key="product.id"
         class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
       >
-        <div class="aspect-square bg-gray-200 flex items-center justify-center">
-          <span class="text-4xl">{{ product.emoji }}</span>
+        <div class="aspect-square bg-gray-200 flex items-center justify-center overflow-hidden">
+          <img 
+            v-if="product.image" 
+            :src="product.image" 
+            :alt="product.name"
+            class="w-full h-full object-cover"
+            @error="$event.target.style.display='none'; $event.target.nextElementSibling.style.display='flex'"/>
+          <span 
+            class="text-4xl"
+            :style="product.image ? 'display: none' : 'display: flex'"
+          >
+            {{ product.emoji }}
+          </span>
         </div>
         
         <div class="p-4">
