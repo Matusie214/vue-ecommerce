@@ -20,7 +20,9 @@ DROP POLICY IF EXISTS "Anyone can add stock notifications" ON stock_notification
 DROP POLICY IF EXISTS "Admins can view all notifications" ON stock_notifications;
 DROP POLICY IF EXISTS "Admins can update notifications" ON stock_notifications;
 
--- Drop all functions
+-- Drop triggers and functions
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+DROP FUNCTION IF EXISTS handle_new_user();
 DROP FUNCTION IF EXISTS create_admin_user(TEXT, TEXT, TEXT);
 
 -- Drop all tables (in correct order due to foreign key constraints)
@@ -31,8 +33,11 @@ DROP TABLE IF EXISTS product_reviews CASCADE;
 DROP TABLE IF EXISTS products CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 
--- Clear any existing data from auth.users if needed (be careful with this!)
+-- Clear any existing test users (optional - be careful!)
+-- Uncomment the line below if you want to remove all test users
 -- DELETE FROM auth.users WHERE email NOT LIKE '%@supabase.io';
+
+-- If you want to keep existing users but just reset tables, leave the above commented
 
 -- Now run the complete database.sql script after this reset
 -- Copy and paste the entire database.sql content in a new SQL editor tab

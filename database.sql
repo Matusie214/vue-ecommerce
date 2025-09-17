@@ -13,33 +13,25 @@ CREATE TABLE users (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Create admin user function
-CREATE OR REPLACE FUNCTION create_admin_user(
-    admin_email TEXT,
-    admin_password TEXT,
-    admin_full_name TEXT
-)
-RETURNS UUID
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-DECLARE
-    new_user_id UUID;
+-- Function to handle user creation
+CREATE OR REPLACE FUNCTION handle_new_user()
+RETURNS TRIGGER AS $$
 BEGIN
-    -- This function should be called from a secure environment
-    -- Create auth user (this would normally be done via Supabase Auth API)
-    INSERT INTO users (id, email, full_name, role)
-    VALUES (
-        gen_random_uuid(),
-        admin_email,
-        admin_full_name,
-        'admin'
-    )
-    RETURNING id INTO new_user_id;
-    
-    RETURN new_user_id;
+  INSERT INTO users (id, email, full_name, role)
+  VALUES (
+    NEW.id,
+    NEW.email,
+    COALESCE(NEW.raw_user_meta_data->>'full_name', split_part(NEW.email, '@', 1)),
+    'user'
+  );
+  RETURN NEW;
 END;
-$$;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Trigger to automatically create user profile
+CREATE OR REPLACE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION handle_new_user();
 
 -- Products table with enhanced features
 CREATE TABLE products (
@@ -111,12 +103,14 @@ INSERT INTO products (name, description, price, category, image, emoji, stock_qu
 ('Wallet', 'Leather bi-fold wallet with RFID protection', 45.00, 'accessories', 'https://images.unsplash.com/photo-1627123424574-724758594e93?w=500', '👛', 18, '["https://images.unsplash.com/photo-1627123424574-724758594e93?w=500", "https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=500"]'::jsonb, '{"Material": "Genuine Leather", "Card Slots": "8", "RFID Protection": "Yes", "Dimensions": "11x9x2 cm"}'::jsonb),
 ('T-Shirt', 'Cotton crew neck t-shirt in various colors', 29.00, 'fashion', 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500', '👕', 50, '["https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500", "https://images.unsplash.com/photo-1583743089695-4b816a340f82?w=500", "https://images.unsplash.com/photo-1571945153237-4929e783af4a?w=500"]'::jsonb, '{"Material": "100% Cotton", "Fit": "Regular", "Care": "Machine Washable", "Sizes": "S, M, L, XL"}'::jsonb);
 
--- Insert sample reviews
-INSERT INTO product_reviews (product_id, user_id, user_name, rating, comment) VALUES
-(1, gen_random_uuid(), 'Demo User', 5, 'Excellent headphones! Great sound quality and comfortable to wear for long periods.'),
-(1, gen_random_uuid(), 'John Doe', 4, 'Very good noise cancellation. Battery life is as advertised.'),
-(2, gen_random_uuid(), 'Demo User', 5, 'Perfect smartwatch for fitness tracking. Love the heart rate monitor!'),
-(5, gen_random_uuid(), 'Alice Smith', 4, 'Great camera quality and fast performance. Highly recommended!');
+-- Sample reviews will be added after users register
+-- For now, we'll skip inserting sample reviews to avoid foreign key violations
+-- Users can add reviews after registering and logging in
+
+-- Note: To add sample reviews later, you need real user IDs from the users table
+-- Example:
+-- INSERT INTO product_reviews (product_id, user_id, user_name, rating, comment) VALUES
+-- (1, 'real-user-uuid-here', 'Real User Name', 5, 'Great product!');
 
 -- Row Level Security policies
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
