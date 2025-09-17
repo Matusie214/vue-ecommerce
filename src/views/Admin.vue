@@ -630,8 +630,7 @@ const addProduct = () => {
   }
 
   productsStore.addProduct({
-    ...newProduct.value,
-    id: Date.now()
+    ...newProduct.value
   })
 
   // Reset form

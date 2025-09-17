@@ -19,23 +19,32 @@ export const useAuthStore = defineStore('auth', () => {
         throw new Error('Database connection not configured. Please check that Supabase environment variables are set correctly with the anon key (not service_role key).')
       }
 
+      console.log('LOGIN: Attempting to sign in with:', email)
       const { data, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password
       })
 
-      if (authError) throw authError
+      if (authError) {
+        console.error('LOGIN: Auth error:', authError)
+        throw authError
+      }
 
+      console.log('LOGIN: Sign in successful, user data:', data.user)
       if (data.user) {
+        console.log('LOGIN: User email confirmed at:', data.user.email_confirmed_at)
+        console.log('LOGIN: Looking up profile for user ID:', data.user.id)
         const { data: profile, error: profileError } = await supabase
           .from('users')
           .select('*')
           .eq('id', data.user.id)
           .single()
 
+        console.log('LOGIN: Profile lookup result:', { profile, profileError })
+
         if (profileError) {
           // Profile doesn't exist, create it manually
-          console.log('Creating user profile manually...')
+          console.log('LOGIN: Profile not found, creating manually...')
           const newProfile = {
             id: data.user.id,
             email: data.user.email!,
@@ -57,6 +66,7 @@ export const useAuthStore = defineStore('auth', () => {
             created_at: data.user.created_at!
           }
         } else {
+          console.log('LOGIN: Profile found successfully:', profile)
           user.value = profile
         }
       }
