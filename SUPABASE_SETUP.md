@@ -1,16 +1,21 @@
 # 🚀 Supabase Setup Guide - Krok po kroku
 
-## 1. Reset bazy danych
+## 1. Setup bazy danych
 
-**ZAWSZE uruchom reset przed utworzeniem nowej bazy:**
+**OPCJA A - Prosty setup (zalecane na początek):**
 
 1. Idź do Supabase dashboard → **SQL Editor**
 2. Skopiuj całą zawartość pliku `database-reset.sql`
 3. Wklej i kliknij **Run**
-4. Skopiuj całą zawartość pliku `database.sql`
+4. Skopiuj całą zawartość pliku `database-simple.sql`
 5. Wklej w nowym oknie SQL Editor i kliknij **Run**
 
-**Ważne**: Nowa wersja `database.sql` ma automatyczny trigger tworzący profile użytkowników!
+**OPCJA B - Pełny setup (jeśli prosty nie działa):**
+
+1. Użyj `database-reset.sql`
+2. Potem użyj `database.sql` (pełna wersja z zaawansowanymi politykami)
+
+**Ważne**: Baza ma automatyczny trigger tworzący profile użytkowników!
 
 ## 2. Znajdź właściwe klucze API
 

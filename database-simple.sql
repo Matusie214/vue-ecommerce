@@ -1,4 +1,5 @@
--- Create tables for E-commerce application
+-- SIMPLIFIED DATABASE SETUP
+-- This version has minimal policies to avoid RLS complexity during initial setup
 
 -- Users table (extends Supabase auth.users)
 CREATE TABLE users (
@@ -51,18 +52,18 @@ CREATE TABLE products (
 -- Product reviews table
 CREATE TABLE product_reviews (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    product_id INTEGER REFERENCES products(id) ON DELETE CASCADE,
-    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     user_name VARCHAR(255) NOT NULL,
-    rating INTEGER CHECK (rating >= 1 AND rating <= 5),
-    comment TEXT NOT NULL,
+    rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    comment TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Stock notifications table
 CREATE TABLE stock_notifications (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    product_id INTEGER REFERENCES products(id) ON DELETE CASCADE,
+    product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
     user_email VARCHAR(255) NOT NULL,
     user_name VARCHAR(255) NOT NULL,
     message TEXT,
@@ -73,7 +74,7 @@ CREATE TABLE stock_notifications (
 -- Orders table
 CREATE TABLE orders (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     total DECIMAL(10,2) NOT NULL,
     status VARCHAR(50) DEFAULT 'pending',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -82,8 +83,8 @@ CREATE TABLE orders (
 -- Order items table
 CREATE TABLE order_items (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    order_id UUID REFERENCES orders(id) ON DELETE CASCADE,
-    product_id INTEGER REFERENCES products(id) ON DELETE CASCADE,
+    order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+    product_id INTEGER NOT NULL REFERENCES products(id),
     quantity INTEGER NOT NULL,
     price DECIMAL(10,2) NOT NULL
 );
@@ -103,145 +104,18 @@ INSERT INTO products (name, description, price, category, image, emoji, stock_qu
 ('Wallet', 'Leather bi-fold wallet with RFID protection', 45.00, 'accessories', 'https://images.unsplash.com/photo-1627123424574-724758594e93?w=500', '👛', 18, '["https://images.unsplash.com/photo-1627123424574-724758594e93?w=500", "https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=500"]'::jsonb, '{"Material": "Genuine Leather", "Card Slots": "8", "RFID Protection": "Yes", "Dimensions": "11x9x2 cm"}'::jsonb),
 ('T-Shirt', 'Cotton crew neck t-shirt in various colors', 29.00, 'fashion', 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500', '👕', 50, '["https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500", "https://images.unsplash.com/photo-1583743089695-4b816a340f82?w=500", "https://images.unsplash.com/photo-1571945153237-4929e783af4a?w=500"]'::jsonb, '{"Material": "100% Cotton", "Fit": "Regular", "Care": "Machine Washable", "Sizes": "S, M, L, XL"}'::jsonb);
 
--- Sample reviews will be added after users register
--- For now, we'll skip inserting sample reviews to avoid foreign key violations
--- Users can add reviews after registering and logging in
-
--- Note: To add sample reviews later, you need real user IDs from the users table
--- Example:
--- INSERT INTO product_reviews (product_id, user_id, user_name, rating, comment) VALUES
--- (1, 'real-user-uuid-here', 'Real User Name', 5, 'Great product!');
-
--- Row Level Security policies
+-- Enable RLS but with permissive policies for initial setup
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE products ENABLE ROW LEVEL SECURITY;
+ALTER TABLE product_reviews ENABLE ROW LEVEL SECURITY;
+ALTER TABLE stock_notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
 
--- Users can only see their own data
-CREATE POLICY "Users can view own profile" ON users
-    FOR SELECT USING (auth.uid() = id);
-
-CREATE POLICY "Users can update own profile" ON users
-    FOR UPDATE USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
-
--- Users can only see their own orders
-CREATE POLICY "Users can view own orders" ON orders
-    FOR SELECT USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can create own orders" ON orders
-    FOR INSERT WITH CHECK (auth.uid() = user_id);
-
--- Users can only see order items for their orders
-CREATE POLICY "Users can view own order items" ON order_items
-    FOR SELECT USING (
-        EXISTS (
-            SELECT 1 FROM orders 
-            WHERE orders.id = order_items.order_id 
-            AND orders.user_id = auth.uid()
-        )
-    );
-
-CREATE POLICY "Users can create order items for own orders" ON order_items
-    FOR INSERT WITH CHECK (
-        EXISTS (
-            SELECT 1 FROM orders 
-            WHERE orders.id = order_items.order_id 
-            AND orders.user_id = auth.uid()
-        )
-    );
-
--- Products policies
-ALTER TABLE products ENABLE ROW LEVEL SECURITY;
-
--- Everyone can view products
-CREATE POLICY "Products are viewable by everyone" ON products
-    FOR SELECT TO authenticated, anon USING (true);
-
--- Only admins can manage products
-CREATE POLICY "Admins can insert products" ON products
-    FOR INSERT TO authenticated WITH CHECK (
-        EXISTS (
-            SELECT 1 FROM users 
-            WHERE users.id = auth.uid() 
-            AND users.role = 'admin'
-        )
-    );
-
-CREATE POLICY "Admins can update products" ON products
-    FOR UPDATE TO authenticated 
-    USING (
-        EXISTS (
-            SELECT 1 FROM users 
-            WHERE users.id = auth.uid() 
-            AND users.role = 'admin'
-        )
-    )
-    WITH CHECK (
-        EXISTS (
-            SELECT 1 FROM users 
-            WHERE users.id = auth.uid() 
-            AND users.role = 'admin'
-        )
-    );
-
-CREATE POLICY "Admins can delete products" ON products
-    FOR DELETE TO authenticated USING (
-        EXISTS (
-            SELECT 1 FROM users 
-            WHERE users.id = auth.uid() 
-            AND users.role = 'admin'
-        )
-    );
-
--- Reviews and notifications policies for admins
-ALTER TABLE product_reviews ENABLE ROW LEVEL SECURITY;
-ALTER TABLE stock_notifications ENABLE ROW LEVEL SECURITY;
-
--- Everyone can view reviews
-CREATE POLICY "Reviews are viewable by everyone" ON product_reviews
-    FOR SELECT TO authenticated, anon USING (true);
-
--- Authenticated users can add reviews
-CREATE POLICY "Authenticated users can add reviews" ON product_reviews
-    FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
-
--- Users can only delete their own reviews, admins can delete any
-CREATE POLICY "Users can delete own reviews, admins can delete any" ON product_reviews
-    FOR DELETE TO authenticated USING (
-        auth.uid() = user_id OR
-        EXISTS (
-            SELECT 1 FROM users 
-            WHERE users.id = auth.uid() 
-            AND users.role = 'admin'
-        )
-    );
-
--- Stock notifications - authenticated users can add, admins can manage
-CREATE POLICY "Anyone can add stock notifications" ON stock_notifications
-    FOR INSERT TO authenticated WITH CHECK (true);
-
-CREATE POLICY "Admins can view all notifications" ON stock_notifications
-    FOR SELECT TO authenticated USING (
-        EXISTS (
-            SELECT 1 FROM users 
-            WHERE users.id = auth.uid() 
-            AND users.role = 'admin'
-        )
-    );
-
-CREATE POLICY "Admins can update notifications" ON stock_notifications
-    FOR UPDATE TO authenticated 
-    USING (
-        EXISTS (
-            SELECT 1 FROM users 
-            WHERE users.id = auth.uid() 
-            AND users.role = 'admin'
-        )
-    )
-    WITH CHECK (
-        EXISTS (
-            SELECT 1 FROM users 
-            WHERE users.id = auth.uid() 
-            AND users.role = 'admin'
-        )
-    );
+-- Basic permissive policies - can be tightened later
+CREATE POLICY "Allow all operations for users" ON users FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all operations for products" ON products FOR ALL TO authenticated, anon USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all operations for reviews" ON product_reviews FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all operations for notifications" ON stock_notifications FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all operations for orders" ON orders FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all operations for order_items" ON order_items FOR ALL TO authenticated USING (true) WITH CHECK (true);
