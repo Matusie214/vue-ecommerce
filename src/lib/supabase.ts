@@ -3,8 +3,8 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || ''
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
 
-// Force demo mode for now - will work without Supabase
-const hasValidConfig = false // supabaseUrl && supabaseAnonKey && supabaseUrl.includes('supabase.co')
+// Check if Supabase is properly configured
+const hasValidConfig = supabaseUrl && supabaseAnonKey && supabaseUrl.includes('supabase.co')
 
 export const supabase = hasValidConfig ? createClient(supabaseUrl, supabaseAnonKey) : null
 

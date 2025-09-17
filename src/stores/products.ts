@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { Product } from '@/lib/supabase'
+import { ApiService } from '@/services/api'
 
 export const useProductsStore = defineStore('products', () => {
   const products = ref<Product[]>([
@@ -251,28 +252,112 @@ export const useProductsStore = defineStore('products', () => {
     }
   ])
 
-  const addProduct = (product: Product) => {
-    products.value.push(product)
-  }
+  const loading = ref(false)
+  const error = ref<string | null>(null)
 
-  const updateProduct = (id: number, updatedProduct: Product) => {
-    const index = products.value.findIndex(p => p.id === id)
-    if (index > -1) {
-      products.value[index] = updatedProduct
+  // Load products from API
+  const loadProducts = async () => {
+    loading.value = true
+    error.value = null
+    try {
+      const data = await ApiService.getProducts()
+      products.value = data
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Failed to load products'
+      console.error('Failed to load products:', err)
+    } finally {
+      loading.value = false
     }
   }
 
-  const updateStock = (id: number, newQuantity: number) => {
-    const product = products.value.find(p => p.id === id)
-    if (product) {
-      product.stock_quantity = newQuantity
+  const addProduct = async (product: Omit<Product, 'id' | 'created_at'>) => {
+    try {
+      const newProduct = await ApiService.addProduct(product)
+      products.value.push(newProduct)
+      return newProduct
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Failed to add product'
+      throw err
     }
   }
 
-  const deleteProduct = (id: number) => {
-    const index = products.value.findIndex(p => p.id === id)
-    if (index > -1) {
-      products.value.splice(index, 1)
+  const updateProduct = async (id: number, updates: Partial<Product>) => {
+    try {
+      const updatedProduct = await ApiService.updateProduct(id, updates)
+      const index = products.value.findIndex(p => p.id === id)
+      if (index > -1) {
+        products.value[index] = updatedProduct
+      }
+      return updatedProduct
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Failed to update product'
+      throw err
+    }
+  }
+
+  const updateStock = async (id: number, newQuantity: number) => {
+    try {
+      await ApiService.updateProductStock(id, newQuantity)
+      const product = products.value.find(p => p.id === id)
+      if (product) {
+        product.stock_quantity = newQuantity
+      }
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Failed to update stock'
+      throw err
+    }
+  }
+
+  const decreaseStock = async (id: number, quantity: number) => {
+    try {
+      await ApiService.decreaseStock(id, quantity)
+      const product = products.value.find(p => p.id === id)
+      if (product) {
+        product.stock_quantity = Math.max(0, product.stock_quantity - quantity)
+      }
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Failed to decrease stock'
+      throw err
+    }
+  }
+
+  const increaseStock = async (id: number, quantity: number) => {
+    try {
+      await ApiService.increaseStock(id, quantity)
+      const product = products.value.find(p => p.id === id)
+      if (product) {
+        product.stock_quantity += quantity
+      }
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Failed to increase stock'
+      throw err
+    }
+  }
+
+  const deleteProduct = async (id: number) => {
+    try {
+      await ApiService.deleteProduct(id)
+      const index = products.value.findIndex(p => p.id === id)
+      if (index > -1) {
+        products.value.splice(index, 1)
+      }
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Failed to delete product'
+      throw err
+    }
+  }
+
+  const searchProducts = async (query: string, category?: string, priceRange?: string) => {
+    loading.value = true
+    error.value = null
+    try {
+      const data = await ApiService.searchProducts(query, category, priceRange)
+      return data
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Failed to search products'
+      throw err
+    } finally {
+      loading.value = false
     }
   }
 
@@ -280,12 +365,29 @@ export const useProductsStore = defineStore('products', () => {
     return products.value.find(p => p.id === id)
   }
 
+  // Initialize with local data for demo mode, but try to load from API
+  const initialize = async () => {
+    try {
+      await loadProducts()
+    } catch (err) {
+      // Keep local data if API fails
+      console.log('Using local product data as fallback')
+    }
+  }
+
   return {
     products,
+    loading,
+    error,
+    loadProducts,
     addProduct,
     updateProduct,
     updateStock,
+    decreaseStock,
+    increaseStock,
     deleteProduct,
-    getProductById
+    searchProducts,
+    getProductById,
+    initialize
   }
 })

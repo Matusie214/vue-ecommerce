@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { ProductReview } from '@/lib/supabase'
+import { ApiService } from '@/services/api'
 
 export const useReviewsStore = defineStore('reviews', () => {
   const reviews = ref<ProductReview[]>([
@@ -54,26 +55,62 @@ export const useReviewsStore = defineStore('reviews', () => {
     return Math.round((sum / productReviews.length) * 10) / 10
   }
 
-  const addReview = (review: Omit<ProductReview, 'id' | 'created_at'>) => {
-    const newReview: ProductReview = {
-      ...review,
-      id: Math.random().toString(36).substr(2, 9),
-      created_at: new Date().toISOString()
+  const loading = ref(false)
+  const error = ref<string | null>(null)
+
+  const loadProductReviews = async (productId: number) => {
+    loading.value = true
+    error.value = null
+    try {
+      const data = await ApiService.getProductReviews(productId)
+      // Update only reviews for this product
+      reviews.value = reviews.value.filter(r => r.product_id !== productId)
+      reviews.value.push(...data)
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Failed to load reviews'
+      console.error('Failed to load reviews:', err)
+    } finally {
+      loading.value = false
     }
-    reviews.value.unshift(newReview)
   }
 
-  const deleteReview = (id: string) => {
-    const index = reviews.value.findIndex(review => review.id === id)
-    if (index > -1) {
-      reviews.value.splice(index, 1)
+  const addReview = async (review: Omit<ProductReview, 'id' | 'created_at'>) => {
+    try {
+      const newReview = await ApiService.addReview(review)
+      reviews.value.unshift(newReview)
+      return newReview
+    } catch (err) {
+      // Fallback to local storage
+      const localReview: ProductReview = {
+        ...review,
+        id: Math.random().toString(36).substr(2, 9),
+        created_at: new Date().toISOString()
+      }
+      reviews.value.unshift(localReview)
+      return localReview
+    }
+  }
+
+  const deleteReview = async (id: string) => {
+    try {
+      await ApiService.deleteReview(id)
+      const index = reviews.value.findIndex(review => review.id === id)
+      if (index > -1) {
+        reviews.value.splice(index, 1)
+      }
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Failed to delete review'
+      throw err
     }
   }
 
   return {
     reviews,
+    loading,
+    error,
     getProductReviews,
     getAverageRating,
+    loadProductReviews,
     addReview,
     deleteReview
   }
