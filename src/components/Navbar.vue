@@ -1,4 +1,10 @@
 <template>
+  <!-- Demo Mode Banner -->
+  <div class="bg-blue-600 text-white text-center py-2 text-sm">
+    <span class="font-medium">🚀 Demo Mode</span> - 
+    Login with demo@example.com / demo123 to explore features
+  </div>
+  
   <nav class="bg-white shadow-md sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex justify-between items-center h-16">

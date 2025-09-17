@@ -4,7 +4,11 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || ''
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
 
 // Check if Supabase is properly configured
-const hasValidConfig = supabaseUrl && supabaseAnonKey && supabaseUrl.includes('supabase.co')
+// Make sure to use anon key, not service_role key (which would cause "Forbidden" error)
+const hasValidConfig = supabaseUrl && 
+                      supabaseAnonKey && 
+                      supabaseUrl.includes('supabase.co') &&
+                      !supabaseAnonKey.includes('service_role')
 
 export const supabase = hasValidConfig ? createClient(supabaseUrl, supabaseAnonKey) : null
 

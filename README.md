@@ -78,10 +78,16 @@ npm run dev
 
 ## Demo Credentials
 
-When Supabase is not configured, the app runs in demo mode with these credentials:
+The app runs in demo mode by default (without Supabase). Use these credentials to log in:
 
-- **Email**: demo@example.com
+- **Email**: demo@example.com  
 - **Password**: demo123
+
+Alternative demo account:
+- **Email**: john@example.com
+- **Password**: demo123
+
+**Note**: If you get "Forbidden use of secret API key" error, make sure your `.env` file has empty values for Supabase keys to enable demo mode.
 
 ## Features Overview
 
