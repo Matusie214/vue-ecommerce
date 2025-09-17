@@ -29,8 +29,11 @@
           
           <!-- User menu -->
           <div v-if="authStore.isAuthenticated" class="flex items-center space-x-2">
-            <span class="text-2xl">{{ authStore.user?.avatar }}</span>
-            <span class="hidden md:block text-gray-700">{{ authStore.user?.name }}</span>
+            <RouterLink to="/admin" class="text-gray-700 hover:text-blue-600 transition-colors text-sm">
+              Admin
+            </RouterLink>
+            <span class="text-2xl">👤</span>
+            <span class="hidden md:block text-gray-700">{{ authStore.user?.full_name || authStore.user?.name }}</span>
             <button 
               @click="authStore.logout"
               class="text-gray-700 hover:text-blue-600 transition-colors text-sm"

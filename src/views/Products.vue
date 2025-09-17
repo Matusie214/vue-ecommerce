@@ -103,24 +103,13 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useCartStore } from '@/stores/cart'
-import type { Product } from '@/stores/cart'
+import { useProductsStore } from '@/stores/products'
+import type { Product } from '@/lib/supabase'
 
 const cartStore = useCartStore()
+const productsStore = useProductsStore()
 
-const products = ref<(Product & { emoji: string })[]>([
-  { id: 1, name: 'Wireless Headphones', price: 199, emoji: '🎧', description: 'Premium noise-cancelling headphones', category: 'electronics', image: '' },
-  { id: 2, name: 'Smart Watch', price: 299, emoji: '⌚', description: 'Fitness tracking and notifications', category: 'electronics', image: '' },
-  { id: 3, name: 'Coffee Maker', price: 149, emoji: '☕', description: 'Automatic drip coffee maker', category: 'home', image: '' },
-  { id: 4, name: 'Backpack', price: 79, emoji: '🎒', description: 'Durable travel backpack', category: 'accessories', image: '' },
-  { id: 5, name: 'Smartphone', price: 699, emoji: '📱', description: 'Latest flagship smartphone', category: 'electronics', image: '' },
-  { id: 6, name: 'Sneakers', price: 129, emoji: '👟', description: 'Comfortable running shoes', category: 'fashion', image: '' },
-  { id: 7, name: 'Laptop', price: 999, emoji: '💻', description: 'High-performance laptop', category: 'electronics', image: '' },
-  { id: 8, name: 'Sunglasses', price: 89, emoji: '🕶️', description: 'UV protection sunglasses', category: 'accessories', image: '' },
-  { id: 9, name: 'Gaming Mouse', price: 59, emoji: '🖱️', description: 'High-precision gaming mouse', category: 'electronics', image: '' },
-  { id: 10, name: 'Plant Pot', price: 25, emoji: '🪴', description: 'Ceramic decorative plant pot', category: 'home', image: '' },
-  { id: 11, name: 'Wallet', price: 45, emoji: '👛', description: 'Leather bi-fold wallet', category: 'accessories', image: '' },
-  { id: 12, name: 'T-Shirt', price: 29, emoji: '👕', description: 'Cotton crew neck t-shirt', category: 'fashion', image: '' }
-])
+const products = computed(() => productsStore.products)
 
 // Filter and search state
 const searchQuery = ref('')

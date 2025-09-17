@@ -7,6 +7,7 @@ import Login from '@/views/Login.vue'
 import Register from '@/views/Register.vue'
 import Checkout from '@/views/Checkout.vue'
 import OrderSuccess from '@/views/OrderSuccess.vue'
+import Admin from '@/views/Admin.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -50,6 +51,11 @@ const router = createRouter({
       path: '/order-success',
       name: 'OrderSuccess',
       component: OrderSuccess
+    },
+    {
+      path: '/admin',
+      name: 'Admin',
+      component: Admin
     }
   ]
 })
