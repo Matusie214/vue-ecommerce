@@ -94,16 +94,51 @@
         </div>
         
         <div class="p-4">
-          <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ product.name }}</h3>
+          <h3 class="text-lg font-semibold text-gray-900 mb-2">
+            <RouterLink :to="`/product/${product.id}`" class="hover:text-blue-600 transition-colors">
+              {{ product.name }}
+            </RouterLink>
+          </h3>
           <p class="text-gray-600 text-sm mb-3">{{ product.description }}</p>
+          
+          <!-- Stock Status -->
+          <div class="mb-3">
+            <div v-if="product.stock_quantity > 0" class="flex items-center text-sm">
+              <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+              <span class="text-green-700">
+                {{ product.stock_quantity }} in stock
+              </span>
+            </div>
+            <div v-else class="flex items-center text-sm">
+              <span class="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+              <span class="text-red-700">Out of stock</span>
+            </div>
+          </div>
+          
           <div class="flex items-center justify-between">
             <span class="text-2xl font-bold text-blue-600">${{ product.price }}</span>
-            <button 
-              @click="addToCart(product)"
-              class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Add to Cart
-            </button>
+            <div class="flex gap-2">
+              <RouterLink 
+                :to="`/product/${product.id}`"
+                class="bg-gray-100 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-200 transition-colors text-sm"
+              >
+                View Details
+              </RouterLink>
+              <button 
+                v-if="product.stock_quantity > 0"
+                @click="addToCart(product)"
+                class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Add to Cart
+              </button>
+              <button 
+                v-else
+                disabled
+                class="bg-gray-300 text-gray-500 px-4 py-2 rounded-lg cursor-not-allowed"
+              >
+                Out of Stock
+              </button>
+            </div>
           </div>
         </div>
       </div>

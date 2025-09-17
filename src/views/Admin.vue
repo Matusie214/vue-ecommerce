@@ -74,6 +74,17 @@
         >
           Orders
         </button>
+        <button
+          @click="activeTab = 'notifications'"
+          :class="[
+            'py-2 px-1 border-b-2 font-medium text-sm',
+            activeTab === 'notifications'
+              ? 'border-blue-500 text-blue-600'
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+          ]"
+        >
+          Stock Notifications
+        </button>
       </nav>
     </div>
 
@@ -168,6 +179,18 @@
             </div>
           </div>
           
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Stock Quantity</label>
+            <input
+              v-model.number="newProduct.stock_quantity"
+              type="number"
+              min="0"
+              required
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              placeholder="0"
+            />
+          </div>
+          
           <div class="md:col-span-3">
             <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
             <textarea
@@ -201,6 +224,7 @@
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
@@ -236,6 +260,16 @@
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   ${{ product.price }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                  <span :class="[
+                    'px-2 py-1 rounded-full text-xs font-medium',
+                    product.stock_quantity > 10 ? 'bg-green-100 text-green-800' :
+                    product.stock_quantity > 0 ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-red-100 text-red-800'
+                  ]">
+                    {{ product.stock_quantity }} {{ product.stock_quantity === 1 ? 'item' : 'items' }}
+                  </span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <button
@@ -296,6 +330,67 @@
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {{ new Date(order.created_at).toLocaleDateString() }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stock Notifications Management -->
+    <div v-if="activeTab === 'notifications'" class="space-y-6">
+      <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h2 class="text-xl font-semibold">Stock Availability Requests</h2>
+          <p class="text-sm text-gray-600 mt-1">Customers waiting for out-of-stock products</p>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Message</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <tr v-for="notification in notificationsStore.notifications" :key="notification.id">
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="flex items-center">
+                    <div class="text-sm font-medium text-gray-900">
+                      {{ getProductName(notification.product_id) }}
+                    </div>
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="text-sm text-gray-900">{{ notification.user_name }}</div>
+                  <div class="text-sm text-gray-500">{{ notification.user_email }}</div>
+                </td>
+                <td class="px-6 py-4">
+                  <div class="text-sm text-gray-900 max-w-xs truncate">
+                    {{ notification.message }}
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {{ new Date(notification.created_at).toLocaleDateString() }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span :class="[
+                    'px-2 inline-flex text-xs leading-5 font-semibold rounded-full',
+                    notification.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                    notification.status === 'notified' ? 'bg-green-100 text-green-800' :
+                    'bg-gray-100 text-gray-800'
+                  ]">
+                    {{ notification.status }}
+                  </span>
+                </td>
+              </tr>
+              <tr v-if="notificationsStore.notifications.length === 0">
+                <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+                  No stock notifications yet
                 </td>
               </tr>
             </tbody>
@@ -370,6 +465,18 @@
                         placeholder="📱"
                       />
                     </div>
+                  </div>
+                  
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Stock Quantity</label>
+                    <input
+                      v-model.number="editingProduct.stock_quantity"
+                      type="number"
+                      min="0"
+                      required
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      placeholder="0"
+                    />
                   </div>
                   
                   <div>
@@ -451,12 +558,14 @@ import { ref, computed, onMounted } from 'vue'
 import { useProductsStore } from '@/stores/products'
 import { useOrdersStore } from '@/stores/orders'
 import { useAuthStore } from '@/stores/auth'
+import { useNotificationsStore } from '@/stores/notifications'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
 const productsStore = useProductsStore()
 const ordersStore = useOrdersStore()
 const authStore = useAuthStore()
+const notificationsStore = useNotificationsStore()
 
 const activeTab = ref('products')
 
@@ -472,7 +581,10 @@ const newProduct = ref({
   category: '',
   description: '',
   emoji: '',
-  image: ''
+  image: '',
+  stock_quantity: 0,
+  images: [],
+  specifications: {}
 })
 
 const showEditModal = ref(false)
@@ -483,7 +595,10 @@ const editingProduct = ref({
   category: '',
   description: '',
   emoji: '',
-  image: ''
+  image: '',
+  stock_quantity: 0,
+  images: [],
+  specifications: {}
 })
 const imageError = ref(false)
 const newProductImageError = ref(false)
@@ -511,7 +626,10 @@ const addProduct = () => {
     category: '',
     description: '',
     emoji: '',
-    image: ''
+    image: '',
+    stock_quantity: 0,
+    images: [],
+    specifications: {}
   }
 
   alert('Product added successfully!')
@@ -532,7 +650,10 @@ const closeEditModal = () => {
     category: '',
     description: '',
     emoji: '',
-    image: ''
+    image: '',
+    stock_quantity: 0,
+    images: [],
+    specifications: {}
   }
 }
 
@@ -557,6 +678,11 @@ const deleteProduct = (id: number) => {
     productsStore.deleteProduct(id)
     alert('Product deleted successfully!')
   }
+}
+
+const getProductName = (productId: number) => {
+  const product = productsStore.getProductById(productId)
+  return product ? product.name : 'Unknown Product'
 }
 
 onMounted(() => {

@@ -16,7 +16,30 @@ export interface Product {
   category: string
   image: string
   emoji: string
+  stock_quantity: number
+  images: string[]
+  specifications?: Record<string, string>
   created_at?: string
+}
+
+export interface ProductReview {
+  id: string
+  product_id: number
+  user_id: string
+  user_name: string
+  rating: number
+  comment: string
+  created_at: string
+}
+
+export interface StockNotification {
+  id: string
+  product_id: number
+  user_email: string
+  user_name: string
+  message: string
+  created_at: string
+  status: 'pending' | 'notified' | 'cancelled'
 }
 
 export interface User {
