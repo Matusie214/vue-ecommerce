@@ -132,13 +132,23 @@
           </div>
           
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              Image URL 
+              <span class="text-xs text-gray-500">(max 500 chars)</span>
+            </label>
             <input
               v-model="newProduct.image"
               type="url"
+              maxlength="500"
               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               placeholder="https://example.com/image.jpg"
             />
+            <p class="text-xs text-gray-500 mt-1">
+              {{ newProduct.image ? newProduct.image.length : 0 }}/500 characters
+              <span v-if="newProduct.image && newProduct.image.length > 500" class="text-red-500 font-medium">
+                - URL too long!
+              </span>
+            </p>
             <!-- Image Preview for Add Form -->
             <div v-if="newProduct.image" class="mt-2">
               <img 
@@ -151,6 +161,10 @@
               <p v-if="newProductImageError" class="text-red-500 text-xs mt-1">
                 Invalid image URL
               </p>
+            </div>
+            <div class="text-xs text-blue-600 mt-1">
+              💡 Try: <a href="https://unsplash.com" target="_blank" class="underline">Unsplash</a>, 
+              <a href="https://pexels.com" target="_blank" class="underline">Pexels</a> for free images
             </div>
           </div>
           
@@ -359,13 +373,23 @@
                   </div>
                   
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                      Image URL 
+                      <span class="text-xs text-gray-500">(max 500 chars)</span>
+                    </label>
                     <input
                       v-model="editingProduct.image"
                       type="url"
+                      maxlength="500"
                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                       placeholder="https://example.com/image.jpg"
                     />
+                    <p class="text-xs text-gray-500 mt-1">
+                      {{ editingProduct.image ? editingProduct.image.length : 0 }}/500 characters
+                      <span v-if="editingProduct.image && editingProduct.image.length > 500" class="text-red-500 font-medium">
+                        - URL too long!
+                      </span>
+                    </p>
                   </div>
                   
                   <!-- Image Preview -->
@@ -470,6 +494,11 @@ const addProduct = () => {
     return
   }
 
+  if (newProduct.value.image && newProduct.value.image.length > 500) {
+    alert('Image URL is too long. Please use a shorter URL (max 500 characters) or try uploading to a different service like Unsplash or Imgur.')
+    return
+  }
+
   productsStore.addProduct({
     ...newProduct.value,
     id: Date.now()
@@ -510,6 +539,11 @@ const closeEditModal = () => {
 const updateProduct = () => {
   if (!editingProduct.value.name || !editingProduct.value.price || !editingProduct.value.category) {
     alert('Please fill in all required fields')
+    return
+  }
+
+  if (editingProduct.value.image && editingProduct.value.image.length > 500) {
+    alert('Image URL is too long. Please use a shorter URL (max 500 characters) or try uploading to a different service like Unsplash or Imgur.')
     return
   }
 
