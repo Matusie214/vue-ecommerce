@@ -16,7 +16,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     try {
       if (!supabase) {
-        throw new Error('Database connection not configured. Please contact administrator.')
+        throw new Error('Database connection not configured. Please check that Supabase environment variables are set correctly with the anon key (not service_role key).')
       }
 
       const { data, error: authError } = await supabase.auth.signInWithPassword({
@@ -71,7 +71,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     try {
       if (!supabase) {
-        throw new Error('Database connection not configured. Please contact administrator.')
+        throw new Error('Database connection not configured. Please check that Supabase environment variables are set correctly with the anon key (not service_role key).')
       }
 
       const { data, error: authError } = await supabase.auth.signUp({

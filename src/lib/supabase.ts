@@ -9,7 +9,19 @@ const hasValidConfig = supabaseUrl &&
                       supabaseAnonKey && 
                       supabaseUrl.includes('supabase.co') &&
                       !supabaseAnonKey.includes('service_role') &&
+                      !supabaseAnonKey.includes('sb_secret_') &&
                       supabaseUrl !== 'https://your-project.supabase.co' // Not placeholder
+
+// Debug logging for deployment troubleshooting
+if (import.meta.env.DEV) {
+  console.log('Supabase Config Check:', {
+    hasUrl: !!supabaseUrl,
+    hasKey: !!supabaseAnonKey,
+    validUrl: supabaseUrl.includes('supabase.co'),
+    isNotServiceRole: !supabaseAnonKey.includes('service_role') && !supabaseAnonKey.includes('sb_secret_'),
+    hasValidConfig
+  })
+}
 
 export const supabase = hasValidConfig ? createClient(supabaseUrl, supabaseAnonKey) : null
 
